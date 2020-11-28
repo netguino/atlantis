@@ -271,6 +271,7 @@ func (g GlobalCfg) ValidateRepoCfg(rCfg RepoCfg, repoID string) error {
 	var allowedWorkflows []string
 	for _, repo := range g.Repos {
 		if repo.IDMatches(repoID) {
+
 			if repo.AllowedWorkflows != nil {
 				allowedWorkflows = repo.AllowedWorkflows
 			}
@@ -281,11 +282,12 @@ func (g GlobalCfg) ValidateRepoCfg(rCfg RepoCfg, repoID string) error {
 		// default is always allowed
 		if p.WorkflowName != nil && len(allowedWorkflows) != 0 {
 			name := *p.WorkflowName
+			if !sliceContainsF(allowedWorkflows, name) || !allowCustomWorkflows {
+				return fmt.Errorf("workflow '%s' is not allowed for this repo", name)
+			}
+
 			if allowCustomWorkflows {
 				break
-			}
-			if !sliceContainsF(allowedWorkflows, name) && !allowCustomWorkflows {
-				return fmt.Errorf("workflow '%s' is not allowed for this repo", name)
 			}
 		}
 	}

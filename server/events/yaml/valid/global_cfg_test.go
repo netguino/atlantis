@@ -129,6 +129,62 @@ func TestGlobalCfg_ValidateRepoCfg(t *testing.T) {
 		repoID string
 		expErr string
 	}{
+		"repo uses workflow that is defined but not allowed": {
+			gCfg: valid.GlobalCfg{
+				Repos: []valid.Repo{
+					valid.NewGlobalCfg(true, false, false).Repos[0],
+					{
+						ID:                   "github.com/owner/repo",
+						AllowCustomWorkflows: Bool(true),
+						AllowedOverrides:     []string{"workflow"},
+						AllowedWorkflows:     []string{"allowed"},
+					},
+				},
+				Workflows: map[string]valid.Workflow{
+					"allowed":   {},
+					"forbidden": {},
+				},
+			},
+			rCfg: valid.RepoCfg{
+				Projects: []valid.Project{
+					{
+						Dir:          ".",
+						Workspace:    "default",
+						WorkflowName: String("forbidden"),
+					},
+				},
+			},
+			repoID: "github.com/owner/repo",
+			expErr: "workflow 'forbidden' is not allowed for this repo",
+		},
+		"repo uses workflow that is defined AND allowed": {
+			gCfg: valid.GlobalCfg{
+				Repos: []valid.Repo{
+					valid.NewGlobalCfg(true, false, false).Repos[0],
+					{
+						ID:                   "github.com/owner/repo",
+						AllowCustomWorkflows: Bool(true),
+						AllowedOverrides:     []string{"workflow"},
+						AllowedWorkflows:     []string{"allowed"},
+					},
+				},
+				Workflows: map[string]valid.Workflow{
+					"allowed":   {},
+					"forbidden": {},
+				},
+			},
+			rCfg: valid.RepoCfg{
+				Projects: []valid.Project{
+					{
+						Dir:          ".",
+						Workspace:    "default",
+						WorkflowName: String("allowed"),
+					},
+				},
+			},
+			repoID: "github.com/owner/repo",
+			expErr: "",
+		},
 		"workflow not allowed": {
 			gCfg: valid.NewGlobalCfg(false, false, false),
 			rCfg: valid.RepoCfg{
@@ -177,34 +233,6 @@ func TestGlobalCfg_ValidateRepoCfg(t *testing.T) {
 			},
 			repoID: "github.com/owner/repo",
 			expErr: "",
-		},
-		"repo uses workflow that is not allowed": {
-			gCfg: valid.GlobalCfg{
-				Repos: []valid.Repo{
-					valid.NewGlobalCfg(true, false, false).Repos[0],
-					{
-						ID:                   "github.com/owner/repo",
-						AllowCustomWorkflows: Bool(true),
-						AllowedOverrides:     []string{"workflow"},
-						AllowedWorkflows:     []string{"serverdefined"},
-					},
-				},
-				Workflows: map[string]valid.Workflow{
-					"serverdefined":  {},
-					"serverdefined2": {},
-				},
-			},
-			rCfg: valid.RepoCfg{
-				Projects: []valid.Project{
-					{
-						Dir:          ".",
-						Workspace:    "default",
-						WorkflowName: String("serverdefined2"),
-					},
-				},
-			},
-			repoID: "github.com/owner/repo",
-			expErr: "workflow serverdefined2 is not allowed for this repo",
 		},
 		"custom workflows allowed for this repo only": {
 			gCfg: valid.GlobalCfg{
