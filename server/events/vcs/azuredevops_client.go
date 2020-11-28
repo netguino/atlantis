@@ -89,7 +89,7 @@ func (g *AzureDevopsClient) GetModifiedFiles(repo models.Repo, pull models.PullR
 //
 // If comment length is greater than the max comment length we split into
 // multiple comments.
-func (g *AzureDevopsClient) CreateComment(repo models.Repo, pullNum int, comment string) error {
+func (g *AzureDevopsClient) CreateComment(repo models.Repo, pullNum int, comment string, command string) error {
 	sepEnd := "\n```\n</details>" +
 		"\n<br>\n\n**Warning**: Output length greater than max comment size. Continued in next comment."
 	sepStart := "Continued from previous comment.\n<details><summary>Show Output</summary>\n\n" +
@@ -195,8 +195,10 @@ func (g *AzureDevopsClient) PullIsMergeable(repo models.Repo, pull models.PullRe
 		// Ignore the Atlantis status, even if its set as a blocker.
 		// This status should not be considered when evaluating if the pull request can be applied.
 		settings := (policyEvaluation.Configuration.Settings).(map[string]interface{})
-		if status, ok := settings["statusName"]; ok && status == "atlantis/apply" {
-			continue
+		if genre, ok := settings["statusGenre"]; ok && genre == "Atlantis Bot/atlantis" {
+			if name, ok := settings["statusName"]; ok && name == "apply" {
+				continue
+			}
 		}
 
 		if *policyEvaluation.Configuration.IsBlocking && *policyEvaluation.Status != azuredevops.PolicyEvaluationApproved {
@@ -229,12 +231,8 @@ func (g *AzureDevopsClient) UpdateStatus(repo models.Repo, pull models.PullReque
 		adState = azuredevops.GitFailed.String()
 	}
 
-	genreStr := "Atlantis Bot"
 	status := azuredevops.GitPullRequestStatus{}
-	status.Context = &azuredevops.GitStatusContext{
-		Name:  &src,
-		Genre: &genreStr,
-	}
+	status.Context = GitStatusContextFromSrc(src)
 	status.Description = &description
 	status.State = &adState
 	if url != "" {
@@ -363,4 +361,31 @@ func SplitAzureDevopsRepoFullName(repoFullName string) (owner string, project st
 			repoFullName[lastSlashIdx+1:]
 	}
 	return repoFullName[:lastSlashIdx], "", repoFullName[lastSlashIdx+1:]
+}
+
+func (g *AzureDevopsClient) SupportsSingleFileDownload(repo models.Repo) bool {
+	return false
+}
+
+func (g *AzureDevopsClient) DownloadRepoConfigFile(pull models.PullRequest) (bool, []byte, error) {
+	return false, []byte{}, fmt.Errorf("Not Implemented")
+}
+
+// GitStatusContextFromSrc parses an Atlantis formatted src string into a context suitable
+// for the status update API. In the AzureDevops branch policy UI there is a single string
+// field used to drive these contexts where all text preceding the final '/' character is
+// treated as the 'genre'.
+func GitStatusContextFromSrc(src string) *azuredevops.GitStatusContext {
+	lastSlashIdx := strings.LastIndex(src, "/")
+	genre := "Atlantis Bot"
+	name := src
+	if lastSlashIdx != -1 {
+		genre = fmt.Sprintf("%s/%s", genre, src[:lastSlashIdx])
+		name = src[lastSlashIdx+1:]
+	}
+
+	return &azuredevops.GitStatusContext{
+		Name:  &name,
+		Genre: &genre,
+	}
 }

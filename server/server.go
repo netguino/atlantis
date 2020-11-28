@@ -252,6 +252,7 @@ func NewServer(userConfig UserConfig, config Config) (*Server, error) {
 		GitlabSupportsCommonMark: gitlabClient.SupportsCommonMark(),
 		DisableApplyAll:          userConfig.DisableApplyAll,
 		DisableMarkdownFolding:   userConfig.DisableMarkdownFolding,
+		DisableApply:             userConfig.DisableApply,
 	}
 
 	boltdb, err := db.New(userConfig.DataDir)
@@ -340,6 +341,7 @@ func NewServer(userConfig UserConfig, config Config) (*Server, error) {
 		GitlabUser:      userConfig.GitlabUser,
 		BitbucketUser:   userConfig.BitbucketUser,
 		AzureDevopsUser: userConfig.AzureDevopsUser,
+		ApplyDisabled:   userConfig.DisableApply,
 	}
 	defaultTfVersion := terraformClient.DefaultVersion()
 	pendingPlanFinder := &events.DefaultPendingPlanFinder{}
@@ -369,15 +371,19 @@ func NewServer(userConfig UserConfig, config Config) (*Server, error) {
 		SilenceForkPRErrorsFlag:  config.SilenceForkPRErrorsFlag,
 		SilenceVCSStatusNoPlans:  userConfig.SilenceVCSStatusNoPlans,
 		DisableApplyAll:          userConfig.DisableApplyAll,
+		DisableApply:             userConfig.DisableApply,
+		DisableAutoplan:          userConfig.DisableAutoplan,
+		ParallelPoolSize:         userConfig.ParallelPoolSize,
 		ProjectCommandBuilder: &events.DefaultProjectCommandBuilder{
-			ParserValidator:   validator,
-			ProjectFinder:     &events.DefaultProjectFinder{},
-			VCSClient:         vcsClient,
-			WorkingDir:        workingDir,
-			WorkingDirLocker:  workingDirLocker,
-			GlobalCfg:         globalCfg,
-			PendingPlanFinder: pendingPlanFinder,
-			CommentBuilder:    commentParser,
+			ParserValidator:    validator,
+			ProjectFinder:      &events.DefaultProjectFinder{},
+			VCSClient:          vcsClient,
+			WorkingDir:         workingDir,
+			WorkingDirLocker:   workingDirLocker,
+			GlobalCfg:          globalCfg,
+			PendingPlanFinder:  pendingPlanFinder,
+			CommentBuilder:     commentParser,
+			SkipCloneNoChanges: userConfig.SkipCloneNoChanges,
 		},
 		ProjectCommandRunner: &events.DefaultProjectCommandRunner{
 			Locker:           projectLocker,
@@ -413,7 +419,7 @@ func NewServer(userConfig UserConfig, config Config) (*Server, error) {
 		GlobalAutomerge:   userConfig.Automerge,
 		Drainer:           drainer,
 	}
-	repoWhitelist, err := events.NewRepoWhitelistChecker(userConfig.RepoWhitelist)
+	repoAllowlist, err := events.NewRepoAllowlistChecker(userConfig.RepoAllowlist)
 	if err != nil {
 		return nil, err
 	}
@@ -435,12 +441,13 @@ func NewServer(userConfig UserConfig, config Config) (*Server, error) {
 		Parser:                          eventParser,
 		CommentParser:                   commentParser,
 		Logger:                          logger,
+		ApplyDisabled:                   userConfig.DisableApply,
 		GithubWebhookSecret:             []byte(userConfig.GithubWebhookSecret),
 		GithubRequestValidator:          &DefaultGithubRequestValidator{},
 		GitlabRequestParserValidator:    &DefaultGitlabRequestParserValidator{},
 		GitlabWebhookSecret:             []byte(userConfig.GitlabWebhookSecret),
-		RepoWhitelistChecker:            repoWhitelist,
-		SilenceWhitelistErrors:          userConfig.SilenceWhitelistErrors,
+		RepoAllowlistChecker:            repoAllowlist,
+		SilenceAllowlistErrors:          userConfig.SilenceAllowlistErrors,
 		SupportedVCSHosts:               supportedVCSHosts,
 		VCSClient:                       vcsClient,
 		BitbucketWebhookSecret:          []byte(userConfig.BitbucketWebhookSecret),
