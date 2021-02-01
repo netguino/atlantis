@@ -138,6 +138,8 @@ github.com/googleapis/gax-go/v2
 # github.com/gorilla/mux v1.8.0
 ## explicit
 github.com/gorilla/mux
+# github.com/gorilla/websocket v1.4.2
+github.com/gorilla/websocket
 # github.com/hashicorp/go-cleanhttp v0.5.1
 github.com/hashicorp/go-cleanhttp
 # github.com/hashicorp/go-getter v1.5.2
@@ -201,10 +203,11 @@ github.com/konsorten/go-windows-terminal-sequences
 ## explicit
 github.com/leodido/go-urn
 # github.com/magiconair/properties v1.8.1
-## explicit
 github.com/magiconair/properties
 # github.com/mattn/go-colorable v0.0.9
 github.com/mattn/go-colorable
+# github.com/mattn/go-isatty v0.0.4
+github.com/mattn/go-isatty
 # github.com/mcdafydd/go-azuredevops v0.12.0
 ## explicit
 github.com/mcdafydd/go-azuredevops/azuredevops
@@ -230,9 +233,12 @@ github.com/mitchellh/reflectwalk
 # github.com/mohae/deepcopy v0.0.0-20170603005431-491d3605edfb
 ## explicit
 github.com/mohae/deepcopy
-# github.com/nlopes/slack v0.1.0
+# github.com/nlopes/slack v0.6.0
 ## explicit
 github.com/nlopes/slack
+github.com/nlopes/slack/internal/errorsx
+github.com/nlopes/slack/internal/timex
+github.com/nlopes/slack/slackutilsx
 # github.com/onsi/ginkgo v1.9.0
 ## explicit
 # github.com/onsi/gomega v1.4.3
@@ -353,7 +359,6 @@ golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
-golang.org/x/net/websocket
 # golang.org/x/oauth2 v0.0.0-20191122200657-5d9234df094c
 ## explicit
 golang.org/x/oauth2
